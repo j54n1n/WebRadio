@@ -87,6 +87,9 @@ public class AudioFocusHelper {
 
         @Override
         public void abandonAudioFocus() {
+            if(audioFocusRequest == null) {
+                return;
+            }
             final AudioManager.OnAudioFocusChangeListener listener =
                     audioFocusRequest.getOnAudioFocusChangeListener();
             audioManager.abandonAudioFocus(listener);
@@ -112,7 +115,6 @@ public class AudioFocusHelper {
 
         public AudioFocusHelperImplApi26(AudioManager audioManager) {
             super(audioManager);
-            audioFocusRequest = null;
         }
 
         @Override
@@ -127,6 +129,9 @@ public class AudioFocusHelper {
         @Override
         @RequiresApi(api = Build.VERSION_CODES.O)
         public void abandonAudioFocus() {
+            if(audioFocusRequest == null) {
+                return;
+            }
             audioManager.abandonAudioFocusRequest(audioFocusRequest);
         }
     }
