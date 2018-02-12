@@ -28,7 +28,7 @@ public class WebRadioLibrary {
                 "BBC",
                 "International news,...",
                 "News",
-                "http://bbcwssc.ic.llnwd.net/stream/bbcwssc_mp1_ws-eieuk.m3u",
+                "http://sc4.vie.llnw.net:80/stream/bbcwssc_mp1_ws-eieuk",
                 R.mipmap.ic_launcher,
                 "ic_launcher");
         createMediaMetadataCompat(
@@ -37,7 +37,7 @@ public class WebRadioLibrary {
                 "BBC",
                 "The best new music",
                 "Music",
-                "http://open.live.bbc.co.uk/mediaselector/5/select/version/2.0/mediaset/http-icy-mp3-a/vpid/bbc_radio_one/format/pls.pls",
+                "http://bbcmedia.ic.llnwd.net/stream/bbcmedia_radio1_mf_p?s=1518430077&e=1518444477&h=35085dc1a0bbcf97d25ef1146c1b51a4",
                 R.mipmap.ic_launcher,
                 "ic_launcher");
     }
