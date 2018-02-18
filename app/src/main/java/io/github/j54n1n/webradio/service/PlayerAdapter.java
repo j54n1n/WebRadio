@@ -53,6 +53,8 @@ public abstract class PlayerAdapter {
 
     public abstract MediaMetadataCompat getCurrentMedia();
 
+    public abstract String getCurrentMediaId();
+
     public abstract boolean isPlaying();
 
     public final void play() {

@@ -1,16 +1,22 @@
 package io.github.j54n1n.webradio.service.players;
 
 import android.content.Context;
+import android.media.AudioAttributes;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
+import android.os.PowerManager;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
+import android.support.v4.media.AudioAttributesCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 
 import io.github.j54n1n.webradio.service.PlaybackInfoListener;
 import io.github.j54n1n.webradio.service.PlayerAdapter;
 import io.github.j54n1n.webradio.service.contentcatalogs.WebRadioLibrary;
+import io.github.j54n1n.webradio.support.media.AudioFocusRequestCompat;
 
 public class MediaPlayerAdapter extends PlayerAdapter {
 
@@ -43,6 +49,19 @@ public class MediaPlayerAdapter extends PlayerAdapter {
     private void initializeMediaPlayer() {
         if(mediaPlayer == null) {
             mediaPlayer = new MediaPlayer();
+            // Use new API instead of setAudioStreamType(STREAM_MUSIC). See also AudioFocusHelper.
+            final AudioAttributesCompat audioAttributes = new AudioAttributesCompat.Builder()
+                    .setUsage(AudioAttributesCompat.USAGE_MEDIA)
+                    .setContentType(AudioAttributesCompat.CONTENT_TYPE_MUSIC)
+                    .build();
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                final AudioAttributes attrs = (AudioAttributes) audioAttributes.unwrap();
+                mediaPlayer.setAudioAttributes(attrs);
+            } else {
+                final int streamType = audioAttributes.getLegacyStreamType();
+                mediaPlayer.setAudioStreamType(streamType);
+            }
+            mediaPlayer.setWakeMode(context, PowerManager.PARTIAL_WAKE_LOCK);
             mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mediaPlayer) {
@@ -126,7 +145,7 @@ public class MediaPlayerAdapter extends PlayerAdapter {
     public void playFromMedia(MediaMetadataCompat metadata) {
         currentMedia = metadata;
         final String mediaId = metadata.getDescription().getMediaId();
-        playFile(WebRadioLibrary.getWebRadioUrl(mediaId));
+        playStream(WebRadioLibrary.getWebRadioUrl(mediaId));
     }
 
     @Override
@@ -134,7 +153,12 @@ public class MediaPlayerAdapter extends PlayerAdapter {
         return currentMedia;
     }
 
-    private void playFile(String streamUrl) {
+    @Override
+    public String getCurrentMediaId() {
+        return ((currentMedia == null) ? null : currentMedia.getDescription().getMediaId());
+    }
+
+    private void playStream(String streamUrl) {
         boolean mediaChanged = (streamUri == null || !streamUrl.equals(streamUri));
         if(currentMediaPlayedToCompletion) {
             // Last audio file was played to completion, the resourceId hasn't changed, but the

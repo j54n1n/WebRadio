@@ -8,13 +8,11 @@ import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaBrowserServiceCompat;
-import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import io.github.j54n1n.webradio.service.PlaybackInfoListener;
@@ -23,30 +21,88 @@ import io.github.j54n1n.webradio.service.contentcatalogs.WebRadioLibrary;
 import io.github.j54n1n.webradio.service.notifications.MediaNotificationManager;
 import io.github.j54n1n.webradio.service.players.MediaPlayerAdapter;
 
+// TODO: Service gets not eliminated when swiped away in Android Auto.
 public class PlaybackService extends MediaBrowserServiceCompat {
 
     private static final String TAG = PlaybackService.class.getSimpleName();
 
-    private MediaSessionCompat session;
+    private static final int MEDIA_SESSION_FLAGS = MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS
+            | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS;
+
+    private MediaSessionCompat mediaSession;
     private PlayerAdapter playerAdapter;
     private MediaNotificationManager mediaNotificationManager;
-    private MediaSessionCallback callback;
+    //private MediaSessionCallback callback;
     private boolean isServiceInStartedState;
 
+    private final MediaSessionCompat.Callback callback = new MediaSessionCompat.Callback() {
+
+        // TODO: Override queue methods to support FLAG_HANDLES_QUEUE_COMMANDS.
+
+        @Override
+        public void onPlay() {
+            final String currentMediaId = playerAdapter.getCurrentMediaId();
+            if(currentMediaId != null) {
+                onPlayFromMediaId(currentMediaId, null);
+            }
+        }
+
+        @Override
+        public void onPlayFromMediaId(String mediaId, Bundle extras) {
+            mediaSession.setActive(true);
+            MediaMetadataCompat mediaMetadata =
+                    WebRadioLibrary.getMetadata(getApplicationContext(), mediaId);
+            mediaSession.setMetadata(mediaMetadata);
+            playerAdapter.playFromMedia(mediaMetadata);
+        }
+
+        @Override
+        public void onPause() {
+            playerAdapter.pause();
+        }
+
+        @Override
+        public void onSkipToNext() {
+            onPlayFromMediaId(WebRadioLibrary.getNextStream(
+                    playerAdapter.getCurrentMediaId()), null);
+        }
+
+        @Override
+        public void onSkipToPrevious() {
+            onPlayFromMediaId(WebRadioLibrary.getPreviousStream(
+                    playerAdapter.getCurrentMediaId()), null);
+        }
+
+        @Override
+        public void onStop() {
+            stopSelf();
+        }
+    };
 
     @Override
     public void onCreate() {
         super.onCreate();
+        mediaSession = new MediaSessionCompat(getApplicationContext(), TAG);
+        mediaSession.setCallback(callback);
+        mediaSession.setFlags(MEDIA_SESSION_FLAGS);
+        setSessionToken(mediaSession.getSessionToken());
+        // TODO: Check NotificationManager.
+        mediaNotificationManager = new MediaNotificationManager(this);
+        // TODO: Check PlayerAdapter (PlaybackManager).
+        playerAdapter = new MediaPlayerAdapter(
+                getApplicationContext(), new MediaPlayerListener());
+        /*
         // Create a new MediaSession.
-        session = new MediaSessionCompat(this, TAG);
+        mediaSession = new MediaSessionCompat(this, TAG);
         callback = new MediaSessionCallback();
-        session.setCallback(callback);
-        session.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS
+        mediaSession.setCallback(callback);
+        mediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS
                 | MediaSessionCompat.FLAG_HANDLES_QUEUE_COMMANDS
                 | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
-        setSessionToken(session.getSessionToken());
+        setSessionToken(mediaSession.getSessionToken());
         mediaNotificationManager = new MediaNotificationManager(this);
         playerAdapter = new MediaPlayerAdapter(this, new MediaPlayerListener());
+        */
         Log.d(TAG, "onCreate: " + TAG + " creating MediaSession and MediaNotificationManager");
     }
 
@@ -60,7 +116,7 @@ public class PlaybackService extends MediaBrowserServiceCompat {
     public void onDestroy() {
         mediaNotificationManager.onDestroy();
         playerAdapter.stop();
-        session.release();
+        mediaSession.release();
         Log.d(TAG, "onDestroy: MediaPlayerAdapter stopped and MediaSession released");
     }
 
@@ -69,15 +125,20 @@ public class PlaybackService extends MediaBrowserServiceCompat {
     public BrowserRoot onGetRoot(@NonNull String clientPackageName,
                                  int clientUid,
                                  @Nullable Bundle rootHints) {
+        Log.d(TAG, "onGetRoot: ");
+        //getString(R.string.app_name), // Name visible in Android Auto
         return new BrowserRoot(WebRadioLibrary.getRoot(), null);
     }
 
     @Override
     public void onLoadChildren(@NonNull String parentId,
                                @NonNull Result<List<MediaBrowserCompat.MediaItem>> result) {
+        Log.d(TAG, "onLoadChildren: ");
         result.sendResult(WebRadioLibrary.getMediaItems());
     }
 
+    /*
+    // TODO: Edit this callback
     // MediaSession Callback: Transport Controls -> MediaPlayerAdapter
     public class MediaSessionCallback extends MediaSessionCompat.Callback {
 
@@ -85,29 +146,37 @@ public class PlaybackService extends MediaBrowserServiceCompat {
         private int queueIndex = -1;
         private MediaMetadataCompat preparedMedia;
 
+        public MediaSessionCallback() {
+            super();
+            Log.d(TAG, "MediaSessionCallback: ");
+        }
+
         @Override
         public void onAddQueueItem(MediaDescriptionCompat description) {
+            Log.d(TAG, "onAddQueueItem: ");
             playlist.add(new MediaSessionCompat.QueueItem(description, description.hashCode()));
             queueIndex = (queueIndex == -1) ? 0 : queueIndex;
         }
 
         @Override
         public void onRemoveQueueItem(MediaDescriptionCompat description) {
+            Log.d(TAG, "onRemoveQueueItem: ");
             playlist.remove(new MediaSessionCompat.QueueItem(description, description.hashCode()));
             queueIndex = (playlist.isEmpty()) ? -1 : queueIndex;
         }
 
         @Override
         public void onPrepare() {
+            Log.d(TAG, "onPrepare: ");
             if(queueIndex < 0 && playlist.isEmpty()) {
                 // Nothing to play.
                 return;
             }
             final String mediaId = playlist.get(queueIndex).getDescription().getMediaId();
             preparedMedia = WebRadioLibrary.getMetadata(PlaybackService.this, mediaId);
-            session.setMetadata(preparedMedia);
-            if(!session.isActive()) {
-                session.setActive(true);
+            mediaSession.setMetadata(preparedMedia);
+            if(!mediaSession.isActive()) {
+                mediaSession.setActive(true);
             }
         }
 
@@ -126,13 +195,14 @@ public class PlaybackService extends MediaBrowserServiceCompat {
 
         @Override
         public void onPause() {
+            Log.d(TAG, "onPause: ");
             playerAdapter.pause();
         }
 
         @Override
         public void onStop() {
             playerAdapter.stop();
-            session.setActive(false);
+            mediaSession.setActive(false);
         }
 
         @Override
@@ -158,6 +228,7 @@ public class PlaybackService extends MediaBrowserServiceCompat {
             return (!playlist.isEmpty());
         }
     }
+    */
 
     // MediaPlayerAdapter Callback: MediaPlayerAdapter state -> PlaybackService.
     public class MediaPlayerListener extends PlaybackInfoListener {
@@ -171,7 +242,7 @@ public class PlaybackService extends MediaBrowserServiceCompat {
         @Override
         public void onPlaybackStateChange(PlaybackStateCompat state) {
             // Report the state to the MediaSession.
-            session.setPlaybackState(state);
+            mediaSession.setPlaybackState(state);
             // Manage the started state of this service.
             switch (state.getState()) {
                 case PlaybackStateCompat.STATE_PLAYING:

@@ -56,6 +56,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onPlayPauseClicked(View view) {
+        // TODO: Quick hack to get media playing. Improve MediaBrowser.
+        mediaBrowserAdapter.getTransportControls().playFromMediaId(
+                WebRadioLibrary.getMediaItems().get(0).getMediaId(), null);
         if(isPlaying) {
             mediaBrowserAdapter.getTransportControls().pause();
         } else {

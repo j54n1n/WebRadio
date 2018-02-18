@@ -129,4 +129,20 @@ public class WebRadioLibrary {
                 //BuildConfig.APPLICATION_ID + "/drawable/" + albumArtResName;
                 BuildConfig.APPLICATION_ID + "/mipmap/" + "ic_launcher"; //albumArtResName;
     }
+
+    public static String getPreviousStream(String currentMediaId) {
+        String prevMediaId = streams.lowerKey(currentMediaId);
+        if(prevMediaId == null) {
+            prevMediaId = streams.lastKey();
+        }
+        return prevMediaId;
+    }
+
+    public static String getNextStream(String currentMediaId) {
+        String nextMediaId = streams.higherKey(currentMediaId);
+        if(nextMediaId == null) {
+            nextMediaId = streams.firstKey();
+        }
+        return nextMediaId;
+    }
 }

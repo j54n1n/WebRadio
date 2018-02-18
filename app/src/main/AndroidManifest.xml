@@ -4,6 +4,7 @@
     package="io.github.j54n1n.webradio">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:allowBackup="true"
@@ -13,6 +14,9 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <meta-data android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
+
         <activity android:name=".MainActivity"
             android:launchMode="singleTop">
             <intent-filter>
@@ -21,6 +25,29 @@
             </intent-filter>
         </activity>
 
+        <!--
+             (OPTIONAL) use this meta data to indicate which icon should be
+             used in Android Auto media notifications (for example, when the
+             music changes and the user is looking at another app)
+        -->
+        <!--<meta-data
+            android:name="com.google.android.gms.car.notification.SmallIcon"
+            android:resource="@drawable/ic_notification" />-->
+
+        <!--
+             (OPTIONAL) use this meta data to override the theme from which Android Auto will
+             look for colors. If you don't set this, Android Auto will look
+             for color attributes in your application theme.
+        -->
+        <!--<meta-data
+            android:name="com.google.android.gms.car.application.theme"
+            android:resource="@style/CarTheme" />-->
+
+        <!--
+             Main music service, provides media browsing and media playback services to consumers
+             through MediaBrowserService and MediaSession. Consumers connect to it through
+             MediaBrowser (for browsing) and MediaController (for play session control)
+        -->
         <service android:name=".PlaybackService"
             android:enabled="true"
             android:exported="true">

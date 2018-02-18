@@ -171,7 +171,8 @@ public class MediaBrowserAdapter {
             // Queue up all media items for this simple sample.
             // TODO: Load async.
             for(MediaBrowserCompat.MediaItem mediaItem : children) {
-                mediaController.addQueueItem(mediaItem.getDescription());
+                // TODO: This is only supported when FLAG_HANDLES_QUEUE_COMMANDS is set in service.
+                //mediaController.addQueueItem(mediaItem.getDescription());
             }
             // Call "playFromMedia" so the UI is updated.
             mediaController.getTransportControls().prepare();
