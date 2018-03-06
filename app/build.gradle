@@ -43,8 +43,8 @@ android {
          */
         applicationId "io.github.j54n1n.webradio"
 
-        // Defines the minimum API level required to run the app.
-        minSdkVersion 15
+        // Defines the minimum API level required to run the app. See also AppCompat.
+        minSdkVersion 14
 
         // Specifies the API level used to test the app.
         targetSdkVersion 27
@@ -76,6 +76,18 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    /** Add custom fields to BuildConfig class for each build type. */
+    buildTypes.each {
+
+        /** Load API keys from property file. */
+        def keys = new Properties()
+        file("../secret.properties").withInputStream {
+            stream -> keys.load(stream)
+        }
+        /** Try to load API keys into a BuildConfig fields or set it to 'null' if not found. */
+        it.buildConfigField 'String', 'KEY_OPML_PARTNER_ID', '"' + keys.OpmlPartnerId + '"'
+    }
 }
 
 /**
@@ -91,6 +103,8 @@ dependencies {
     implementation 'com.android.support:appcompat-v7:27.0.2'
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     implementation 'com.android.support:support-media-compat:27.0.2'
+    implementation 'com.android.volley:volley:1.1.0'
+    implementation 'com.android.support:design:27.1.0'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'

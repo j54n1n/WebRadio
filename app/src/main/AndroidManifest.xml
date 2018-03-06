@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="io.github.j54n1n.webradio">
 
@@ -13,14 +12,17 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-
-        <meta-data android:name="com.google.android.gms.car.application"
+        <meta-data
+            android:name="com.google.android.gms.car.application"
             android:resource="@xml/automotive_app_desc" />
 
-        <activity android:name=".MainActivity"
+        <activity
+            android:name=".Main2Activity"
+            android:theme="@style/AppTheme.NoActionBar"
             android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -30,25 +32,32 @@
              used in Android Auto media notifications (for example, when the
              music changes and the user is looking at another app)
         -->
-        <!--<meta-data
+        <!--
+            <meta-data
             android:name="com.google.android.gms.car.notification.SmallIcon"
-            android:resource="@drawable/ic_notification" />-->
+            android:resource="@drawable/ic_notification" />
+        -->
+
 
         <!--
              (OPTIONAL) use this meta data to override the theme from which Android Auto will
              look for colors. If you don't set this, Android Auto will look
              for color attributes in your application theme.
         -->
-        <!--<meta-data
+        <!--
+            <meta-data
             android:name="com.google.android.gms.car.application.theme"
-            android:resource="@style/CarTheme" />-->
+            android:resource="@style/CarTheme" />
+        -->
+
 
         <!--
              Main music service, provides media browsing and media playback services to consumers
              through MediaBrowserService and MediaSession. Consumers connect to it through
              MediaBrowser (for browsing) and MediaController (for play session control)
         -->
-        <service android:name=".PlaybackService"
+        <service
+            android:name=".PlaybackService"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -65,10 +74,9 @@
         -->
         <receiver android:name="android.support.v4.media.session.MediaButtonReceiver">
             <intent-filter>
-                <action android:name="android.intent.action.MEDIA_BUTTON"/>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
-
     </application>
 
 </manifest>
