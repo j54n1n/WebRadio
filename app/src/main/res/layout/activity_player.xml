@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="io.github.j54n1n.webradio.PlayerActivity">
+
+    <ImageView
+        android:id="@+id/iv_stream_art"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitCenter"
+        tools:ignore="ContentDescription" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="#a0ffffff"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_stream_artist"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="ContentDescription" />
+
+    <TextView
+        android:id="@+id/tv_stream_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="0dp"
+        android:gravity="center"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_stream_artist"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:text="Stream Title" />
+
+    <TextView
+        android:id="@+id/tv_stream_artist"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="12dp"
+        android:gravity="center"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_stream_title"
+        android:text="Stream Artist" />
+
+    <ImageView
+        android:id="@+id/iv_stream_controls"
+        android:layout_width="192dp"
+        android:layout_height="192dp"
+        android:alpha=".9"
+        android:src="@drawable/ic_play_pause_toggle"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:ignore="ContentDescription" />
+
+    <Button
+        android:id="@+id/b_previous"
+        android:layout_width="50dp"
+        android:layout_height="0dp"
+        android:background="@android:color/transparent"
+        android:contentDescription="@string/label_previous"
+        android:onClick="onPreviousClicked"
+        app:layout_constraintBottom_toBottomOf="@+id/iv_stream_controls"
+        app:layout_constraintStart_toStartOf="@+id/iv_stream_controls"
+        app:layout_constraintTop_toTopOf="@+id/iv_stream_controls" />
+
+    <Button
+        android:id="@+id/b_play_pause"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@android:color/transparent"
+        android:contentDescription="@string/label_play_pause"
+        android:onClick="onPlayPauseClicked"
+        app:layout_constraintBottom_toBottomOf="@+id/iv_stream_controls"
+        app:layout_constraintEnd_toStartOf="@+id/b_next"
+        app:layout_constraintStart_toEndOf="@+id/b_previous"
+        app:layout_constraintTop_toTopOf="@+id/iv_stream_controls" />
+
+    <Button
+        android:id="@+id/b_next"
+        android:layout_width="50dp"
+        android:layout_height="0dp"
+        android:background="@android:color/transparent"
+        android:contentDescription="@string/label_next"
+        android:onClick="onNextClicked"
+        app:layout_constraintBottom_toBottomOf="@+id/iv_stream_controls"
+        app:layout_constraintEnd_toEndOf="@+id/iv_stream_controls"
+        app:layout_constraintTop_toTopOf="@+id/iv_stream_controls" />
+
+</android.support.constraint.ConstraintLayout>

@@ -20,7 +20,7 @@ import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 
-import io.github.j54n1n.webradio.MainActivity;
+import io.github.j54n1n.webradio.PlayerActivity;
 import io.github.j54n1n.webradio.PlaybackService;
 import io.github.j54n1n.webradio.R;
 import io.github.j54n1n.webradio.service.contentcatalogs.WebRadioLibrary;
@@ -170,7 +170,7 @@ public class MediaNotificationManager {
     }
 
     private PendingIntent createContentIntent() {
-        Intent intent = new Intent(service, MainActivity.class);
+        Intent intent = new Intent(service, PlayerActivity.class);
         // Reuse existing activity task. See also AndroidManifest.xml
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         return PendingIntent.getActivity(

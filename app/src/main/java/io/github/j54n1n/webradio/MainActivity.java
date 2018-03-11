@@ -1,178 +1,185 @@
 package io.github.j54n1n.webradio;
 
-import android.graphics.Bitmap;
-import android.support.annotation.Nullable;
-import android.support.v4.media.MediaMetadataCompat;
-import android.support.v4.media.session.PlaybackStateCompat;
+import android.support.annotation.NonNull;
+import android.support.design.widget.NavigationView;
+import android.support.design.widget.TabLayout;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+
+import android.support.v4.view.ViewPager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
+import com.android.volley.toolbox.JsonObjectRequest;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.zip.GZIPInputStream;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-import io.github.j54n1n.webradio.client.MediaBrowserAdapter;
-import io.github.j54n1n.webradio.service.contentcatalogs.WebRadioLibrary;
+import java.util.ArrayList;
+import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+import io.github.j54n1n.webradio.client.BrowseIndexPagerAdapter;
+import io.github.j54n1n.webradio.client.Connection;
+import io.github.j54n1n.webradio.service.contentcatalogs.radiotime.OPML;
+import io.github.j54n1n.webradio.service.contentcatalogs.radiotime.OpmlRequest;
+import io.github.j54n1n.webradio.service.contentcatalogs.radiotime.model.BrowseIndexItem;
 
-    final static String TAG = MainActivity.class.getSimpleName();
+public class MainActivity extends AppCompatActivity
+        implements NavigationView.OnNavigationItemSelectedListener {
 
-    private ImageView streamArt;
-    private TextView streamTitle;
-    private TextView streamArtist;
-    private ImageView streamControlsImage;
+    private static final String TAG = MainActivity.class.getSimpleName();
 
-    private MediaBrowserAdapter mediaBrowserAdapter;
-    private boolean isPlaying;
-
+    private BrowseIndexPagerAdapter browseIndexPagerAdapter;
+    private List<BrowseIndexItem> browseIndexItems;
     private RequestQueue requestQueue;
+
+    /**
+     * The {@link ViewPager} that will host the section contents.
+     */
+    private ViewPager viewPager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        initUI();
-        mediaBrowserAdapter = new MediaBrowserAdapter(this);
-        mediaBrowserAdapter.addListener(new MediaBrowserListener());
 
-        requestQueue = Volley.newRequestQueue(getApplicationContext());
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
-        /*
-        new Thread(new Runnable() {
+        DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle drawerToggle = new ActionBarDrawerToggle(
+                this, drawerLayout, toolbar,
+                R.string.navigation_drawer_open,
+                R.string.navigation_drawer_close);
+        drawerLayout.addDrawerListener(drawerToggle);
+        drawerToggle.syncState();
+
+        NavigationView navigationView = findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+
+        // Set up the ViewPager with the sections adapter.
+        viewPager = findViewById(R.id.container);
+
+        requestQueue = Connection.getInstance(this).getRequestQueue();
+        browseIndexItems = new ArrayList<>();
+        parseJson();
+
+        TabLayout tabLayout = findViewById(R.id.tabs);
+
+        viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
+        tabLayout.addOnTabSelectedListener(new TabLayout.ViewPagerOnTabSelectedListener(viewPager));
+        tabLayout.setupWithViewPager(viewPager);
+
+        FloatingActionButton fab = findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void run() {
-                requestFromUrl("http://www.android.com");
+            public void onClick(View view) {
+                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
             }
-        }).start();
-        */
+        });
+
     }
 
-    private void initUI() {
-        streamArt = findViewById(R.id.iv_stream_art);
-        streamTitle = findViewById(R.id.tv_stream_title);
-        streamArtist = findViewById(R.id.tv_stream_artist);
-        streamControlsImage = findViewById(R.id.iv_stream_controls);
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        mediaBrowserAdapter.onStart();
-
-        // TODO: 302 redirect from http to https does not work.
-        //final String url = "https://www.android.com";
-        //final String url = "http://www.android.com";
-        final String url = "http://opml.radiotime.com/Search.ashx?query=bbc";
-        StringRequest stringRequest = new StringRequest(
-                Request.Method.GET, url, new Response.Listener<String>() {
+    // TODO: move to OPML class; set http headers ect.
+    private void parseJson() {
+        final String baseUrl = "http://opml.radiotime.com/Browse.ashx";
+        final String url = baseUrl
+                + "?partnerId=" + OPML.getPartnerId()
+                + "&serial=" + OPML.getSerial(this)
+                + "&render=json";
+        Log.d(TAG, "url = " + url);
+        JsonObjectRequest request = new OpmlRequest(
+                Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
             @Override
-            public void onResponse(String response) {
-                Log.d(TAG, response);
+            public void onResponse(JSONObject response) {
+                try {
+                    JSONArray jsonArray = response.getJSONArray("body");
+                    for(int i = 0; i < jsonArray.length(); i++) {
+                        JSONObject item = jsonArray.getJSONObject(i);
+                        String text = item.getString("text");
+                        String url = item.getString("URL");
+                        String key = item.getString("key");
+                        if("settings".equalsIgnoreCase(key)) {
+                            continue;
+                        }
+                        browseIndexItems.add(new BrowseIndexItem(text, url, key));
+                    }
+                    // Create the adapter that will return a fragment for each of the primary
+                    // sections of the activity.
+                    browseIndexPagerAdapter = new BrowseIndexPagerAdapter(
+                            getSupportFragmentManager(), browseIndexItems);
+                    // Set up the ViewPager with the sections adapter.
+                    viewPager.setAdapter(browseIndexPagerAdapter);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Log.d(TAG,"Error: " + url);
+                error.printStackTrace();
             }
         });
-        stringRequest.setTag(TAG);
-        //stringRequest.setRetryPolicy(new DefaultRetryPolicy(10000, 1, 1.0f));
-        requestQueue.add(stringRequest);
+        requestQueue.add(request);
     }
 
-    private static void requestFromUrl(String url) {
-        // Choose: HttpUrlConnection, Apache HTTP, Volley
-        try {
-            HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-            connection.setRequestProperty("Accept-Encoding", "gzip");
-            connection.connect();
-            InputStream stream;
-            if((connection.getContentEncoding() != null)
-                    && (connection.getContentEncoding().equalsIgnoreCase("gzip"))) {
-                stream = new GZIPInputStream(connection.getInputStream());
-            } else {
-                stream = new BufferedInputStream(connection.getInputStream());
-            }
-            BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-            String line, response = "";
-            while((line = reader.readLine()) != null) {
-                response += line + "\n";
-            }
-            Log.d(url, response);
-            reader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
-        mediaBrowserAdapter.onStop();
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
 
-        if(requestQueue != null) {
-            requestQueue.cancelAll(TAG);
+        //noinspection SimplifiableIfStatement
+        if(id == R.id.action_search) {
+            return true;
         }
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
-    public void onPreviousClicked(View view) {
-        mediaBrowserAdapter.getTransportControls().skipToPrevious();
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        // Handle navigation view item clicks here.
+        int id = item.getItemId();
+
+        DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
+        drawerLayout.closeDrawer(GravityCompat.START);
+        return true;
     }
 
-    public void onPlayPauseClicked(View view) {
-        // TODO: Quick hack to get media playing. Improve MediaBrowser.
-        mediaBrowserAdapter.getTransportControls().playFromMediaId(
-                WebRadioLibrary.getMediaItems().get(0).getMediaId(), null);
-        if(isPlaying) {
-            mediaBrowserAdapter.getTransportControls().pause();
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START);
         } else {
-            mediaBrowserAdapter.getTransportControls().play();
-        }
-    }
-
-    public void onNextClicked(View view) {
-        mediaBrowserAdapter.getTransportControls().skipToNext();
-    }
-
-    class MediaBrowserListener extends MediaBrowserAdapter.MediaBrowserChangeListener {
-
-        @Override
-        public void onPlaybackStateChanged(@Nullable PlaybackStateCompat playbackState) {
-            isPlaying = ((playbackState != null)
-                    && (playbackState.getState() == PlaybackStateCompat.STATE_PLAYING));
-            streamControlsImage.setPressed(isPlaying);
-        }
-
-        @Override
-        public void onMetadataChanged(@Nullable MediaMetadataCompat mediaMetadata) {
-            if(mediaMetadata == null) {
-                return;
-            }
-            final String title = mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE);
-            final String artist =  mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST);
-            final Bitmap art = WebRadioLibrary.getAlbumBitmap(
-                    MainActivity.this,
-                    mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID));
-            streamTitle.setText(title);
-            streamArtist.setText(artist);
-            streamArt.setImageBitmap(art);
+            super.onBackPressed();
         }
     }
 }

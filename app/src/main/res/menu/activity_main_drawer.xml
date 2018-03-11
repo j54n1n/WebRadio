@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <!-- TODO: Check usage of compat XML vectors for the icons -->
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_item_1"
+            android:icon="@drawable/ic_bookmark_black_18dp"
+            android:title="Android Auto Radio 1" />
+    </group>
+
+    <item android:title="Local Radio">
+        <menu>
+            <item
+                android:id="@+id/nav_loc_item_1"
+                android:icon="@drawable/ic_bookmark_black_18dp"
+                android:title="Android Auto Local Radio 1" />
+        </menu>
+    </item>
+
+</menu>

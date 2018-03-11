@@ -41,8 +41,8 @@ public class MediaPlayerAdapter extends PlayerAdapter {
 
     /**
      * Once the {@link MediaPlayer} is released, it can't be used again, and another one has to be
-     * created. In the onStop() method of the {MainActivity} the {@link MediaPlayer} is
-     * released. Then in the onStart() of the {MainActivity} a new {@link MediaPlayer}
+     * created. In the onStop() method of the {Activity} the {@link MediaPlayer} is
+     * released. Then in the onStart() of the {Activity} a new {@link MediaPlayer}
      * object has to be created. That's why this method is private, and called by load(int) and
      * not the constructor.
      */
